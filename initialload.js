@@ -1,1 +1,0 @@
-//https://6a3d4745trial.integrationsuite-trial.cfapps.us10-001.hana.ondemand.com/odata/1.0/workspace.svc/ContentEntities.ContentPackages?$format=json
