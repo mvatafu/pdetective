@@ -8,7 +8,7 @@
   const flowId = fullUrl.substring(fullUrl.lastIndexOf('/') + 1);
   // Extract the text between "/contentpackage/" and "/integrationflows/"
   const packageId = fullUrl.split('/contentpackage/')[1]?.split('/integrationflows/')[0] || '';
-
+  
   console.log("Tenant URL:", tenantUrl); // Logs the tenant URL
   console.log("Flow ID:", flowId); // Logs the flow ID
   console.log("Package ID:", packageId); // Logs the flow ID
