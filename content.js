@@ -14,10 +14,9 @@ async function runContentLogic() {
   // Extract the text between "/contentpackage/" and "/integrationflows/"
   const packageId = fullUrl.split('/contentpackage/')[1]?.split('/integrationflows/')[0] || '';
 
-  console.log("Tenant URL:", tenantUrl);
-  console.log("Flow ID:", flowId);
-  console.log("Package ID:", packageId);
-
+  console.log("Tenant URL:", tenantUrl); // Logs the tenant URL
+  console.log("Flow ID:", flowId); // Logs the flow ID
+  console.log("Package ID:", packageId); // Logs the flow ID
   try {
     // Get Workspace ID
     const cpResponse = await fetch(`${tenantUrl}/odata/1.0/workspace.svc/ContentPackages('${packageId}')?$format=json`);
@@ -50,26 +49,36 @@ async function runContentLogic() {
       iflowData.bpmnModel.connectors.forEach((connector, index) => {
         console.log(`Processing connector with id: ${connector.id}`);
 
-        // Check if the connector's name is "ProcessDirect"
-        if (connector.attributes && connector.attributes.name === 'ProcessDirect') {
-          // Extract the corresponding address value
-          const addressValue = iflowData.propertyViewModel?.listOfDefaultChannelModel?.[index]?.allAttributes?.address?.value;
-          console.log(`Found addressValue for connector ${connector.id}: ${addressValue}`);
+if (connector.attributes.name === 'ProcessDirect') {
+  // Extract the address value for the corresponding connector
+  const addressValue = iflowData.propertyViewModel?.listOfDefaultChannelModel?.[index]?.allAttributes?.address?.value;
 
-          if (addressValue) {
-            // Create a unique storage key using direction, flowId, packageId, and connector.id
-            const storageKey = `${addressValue}|${flowId}|${packageId}|${connector.id}`;
-            console.log(`Generated storage key: ${storageKey}`);
+  console.log(`Found addressValue: ${addressValue}`); // Debugging: log address value found
 
-            // Access the storage and update the address value without adding duplicates
-            chrome.storage.local.get([storageKey], (result) => {
-              let addressValues = result[storageKey] || [];
-              if (!addressValues.includes(addressValue)) {
-                addressValues.push(addressValue);
-                console.log(`Adding new address value for connector ${connector.id}.`);
-              } else {
-                console.log(`Address value ${addressValue} already exists for connector ${connector.id}.`);
-              }
+  if (addressValue) {
+    // Create a unique storage key using flowId, packageId, and elementId
+    const storageKey = `${flowId}|${packageId}|${connector.id}`;
+    console.log(`Generated storage key: ${storageKey}`); // Debugging: log storage key being created
+
+    // Access the storage and update the address value
+    chrome.storage.local.get([storageKey], (result) => {
+      console.log(`Storage result for key ${storageKey}:`, result); // Debugging: log what is in storage for the key
+
+      let addressValues = result[storageKey] || []; // Default to empty array if nothing exists
+
+      // Check if the address already exists in the array
+      const index = addressValues.indexOf(addressValue);
+      console.log(`Address value ${addressValue} found at index: ${index}`); // Debugging: log if address exists or not
+
+      if (index === -1) {
+        // If address doesn't exist, add it
+        console.log(`Address value ${addressValue} not found, adding it.`);
+        addressValues.push(addressValue);
+      } else {
+        // If address exists, replace the value (effectively "overwrite" it)
+        console.log(`Address value ${addressValue} found, replacing it.`);
+        addressValues[index] = addressValue;
+      }
 
               // Save the updated array back to storage
               chrome.storage.local.set({ [storageKey]: addressValues }, () => {

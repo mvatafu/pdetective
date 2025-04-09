@@ -17,8 +17,8 @@ function runSearchLogic() {
     // Step 3: Search for the selected text in values
     for (const [key, value] of Object.entries(result)) {
       if (Object.values(value).includes(selectedText)) {
-        const [flowId, packageId, elementId] = key.split('|');
-        matches.push({ flowId, packageId, elementId });
+        const [direction, flowId, packageId, elementId] = key.split('|');
+        matches.push({ direction, flowId, packageId, elementId });
       }
     }
     if (matches.length === 0) {
@@ -67,9 +67,9 @@ function showPopup(matches, selectedText) {
     list.appendChild(noMatchItem);
   } else {
     // If matches are found, display them
-    matches.forEach(({ flowId, packageId, elementId }) => {
+    matches.forEach(({ direction, flowId, packageId, elementId }) => {
       const item = document.createElement("li");
-      item.innerHTML = `Element ID <b>${elementId}</b> | iFlow ID <b>${flowId}</b> | Package ID <b>${packageId}</b>`;
+      item.innerHTML = `Direction <b>${direction}</b> Element ID <b>${elementId}</b> | iFlow ID <b>${flowId}</b> | Package ID <b>${packageId}</b>`;
       list.appendChild(item);
     });
   }
