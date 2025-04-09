@@ -51,12 +51,13 @@ console.log(`Processing connector with id: ${connector.id}`); // Debugging: log 
 if (connector.attributes.name === 'ProcessDirect') {
   // Extract the address value for the corresponding connector
   const addressValue = iflowData.propertyViewModel?.listOfDefaultChannelModel?.[index]?.allAttributes?.address?.value;
+  const direction = iflowData.propertyViewModel?.listOfDefaultChannelModel?.[index]?.direction?.value;
 
   console.log(`Found addressValue: ${addressValue}`); // Debugging: log address value found
 
   if (addressValue) {
     // Create a unique storage key using flowId, packageId, and elementId
-    const storageKey = `${flowId}|${packageId}|${connector.id}`;
+    const storageKey = `${direction}|${flowId}|${packageId}|${connector.id}`;
     console.log(`Generated storage key: ${storageKey}`); // Debugging: log storage key being created
 
     // Access the storage and update the address value
