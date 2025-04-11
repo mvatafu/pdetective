@@ -40,7 +40,7 @@ function showPopup(matches, selectedText) {
   popup.style.padding = "20px";
   popup.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.2)";
   popup.style.borderRadius = "10px";
-  popup.style.maxWidth = "450px";
+  popup.style.maxWidth = "1000px";
   popup.style.fontFamily = "Arial, sans-serif";
   popup.style.fontSize = "14px";
   popup.style.color = "#333";
@@ -69,7 +69,7 @@ function showPopup(matches, selectedText) {
     // If matches are found, display them
     matches.forEach(({ direction, flowId, packageId, elementId }) => {
       const item = document.createElement("li");
-      item.innerHTML = `Direction <b>${direction}</b> Element ID <b>${elementId}</b> | iFlow ID <b>${flowId}</b> | Package ID <b>${packageId}</b>`;
+      item.innerHTML = `Direction <b>${direction}</b> | Element ID <b>${elementId}</b> | iFlow ID <b>${flowId}</b> | Package ID <b>${packageId}</b>`;
       list.appendChild(item);
     });
   }
