@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Progress Log</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 10px; }
+    .progress-container { margin-bottom: 15px; }
+    .progress-bar { width: 100%; background: #f1f1f1; }
+    .progress-bar .bar { height: 20px; background: #4caf50; width: 0%; }
+    .log { font-size: 14px; margin-top: 10px; }
+    .log p { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <h2>Processing Progress</h2>
+  <div id="progressContainer" class="progress-container">
+    <div class="progress-bar">
+      <div id="progressBar" class="bar"></div>
+    </div>
+  </div>
+  <div id="logContainer" class="log">
+    <p>Starting Process...</p>
+  </div>
+</body>
+<script>
+    chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+        if (msg.action === 'progressUpdateFromBG') {
+          const { step, status } = msg;
+      
+          const progressBar = document.getElementById('progressBar');
+          const logContainer = document.getElementById('logContainer');
+      
+          const currentProgress = parseFloat(progressBar.style.width) || 0;
+          const newProgress = Math.min(currentProgress + 10, 100);
+          progressBar.style.width = `${newProgress}%`;
+      
+          const log = document.createElement('p');
+          log.textContent = `${step}: ${status}`;
+          logContainer.appendChild(log);
+        }
+      });
+      
+    </script>      
+</html>

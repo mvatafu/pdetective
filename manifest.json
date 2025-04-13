@@ -5,11 +5,19 @@
   "permissions": [
     "scripting",
     "activeTab",
-    "storage"
+    "storage",
+    "alarms",
+    "tabs"
   ],
   "host_permissions": [
     "*://*.hana.ondemand.com/*",
     "*://*.ondemand.com/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["progressPopup.html"],
+      "matches": ["<all_urls>"]
+    }
   ],
   "action": {
     "default_popup": "popup.html",
@@ -31,4 +39,3 @@
     "128": "resources/icons/128.png"
   }
 }
-
