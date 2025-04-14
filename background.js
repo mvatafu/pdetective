@@ -3,8 +3,8 @@ chrome.runtime.onInstalled.addListener(async () => {
   const { autoRunInterval } = await chrome.storage.local.get("autoRunInterval");
 
   if (autoRunInterval === undefined) {
-    await chrome.storage.local.set({ autoRunInterval: 5 });
-    console.log("🆕 Set default autoRunInterval = 5");
+    await chrome.storage.local.set({ autoRunInterval: 1440 });
+    console.log("🆕 Set default autoRunInterval = 1440");
   } else {
     console.log("ℹ️ autoRunInterval already set to:", autoRunInterval);
   }

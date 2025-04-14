@@ -131,9 +131,16 @@ function setupButtonHandlers() {
     document.getElementById("showDetailsBtn").addEventListener("click", toggleExplanationSections);
 
     document.getElementById("initialload").addEventListener("click", async () => {
+        const confirmed = confirm(
+            "Clicking this button will trigger the initial load, which, depending on the number of artifacts, may take a while.\n\nBear in mind it might take a while, but you will be able to see all the logs.\n\nAre you sure to do that?"
+        );
+    
+        if (!confirmed) return;
+    
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         injectScript(tab.id, "__initialloadScriptInjected", "initialload.js", "runInitialLoadLogic");
     });
+    
 
     document.getElementById("start").addEventListener("click", async () => {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
