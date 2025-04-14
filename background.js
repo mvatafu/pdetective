@@ -1,4 +1,4 @@
-// Ensure default interval is set on install/reload
+// === SET DEFAULT INTERVAL AND CREATE ALARM ===
 chrome.runtime.onInstalled.addListener(async () => {
   const { autoRunInterval } = await chrome.storage.local.get("autoRunInterval");
 
@@ -8,9 +8,23 @@ chrome.runtime.onInstalled.addListener(async () => {
   } else {
     console.log("ℹ️ autoRunInterval already set to:", autoRunInterval);
   }
+
+  setupAlarm();
 });
 
-// Handle alarm trigger for initialload logic
+// === SETUP ALARM FUNCTION ===
+async function setupAlarm() {
+  const { autoRunInterval } = await chrome.storage.local.get("autoRunInterval");
+  const intervalInMinutes = autoRunInterval || 1440;
+
+  chrome.alarms.create("initialloadTrigger", {
+    periodInMinutes: intervalInMinutes,
+  });
+
+  console.log(`🔁 Alarm scheduled every ${intervalInMinutes} minute(s)`);
+}
+
+// === ON ALARM: RUN LOGIC IF ENOUGH TIME HAS PASSED ===
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name !== "initialloadTrigger") return;
 
@@ -18,7 +32,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
   try {
     const now = Date.now();
-
     const { lastRunTimestamp, autoRunInterval } = await chrome.storage.local.get([
       "lastRunTimestamp",
       "autoRunInterval",
@@ -69,8 +82,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
-
-// Retry sending message after a short delay if content script is not ready
+// === Retry sending message to content script ===
 function sendMessageToContentScript(tabId) {
   let retries = 3;
   const interval = setInterval(async () => {
@@ -97,7 +109,7 @@ function sendMessageToContentScript(tabId) {
   }, 1000); // Retry every second, for up to 3 attempts
 }
 
-// === Handle all messages in a single listener
+// === Message listener for storage saving and UI updates ===
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === "saveToStorage") {
     const { key, value } = msg;
@@ -110,27 +122,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       });
     });
 
-    return true; // Required for async response
+    return true;
   }
 
   if (msg.action === "updateProgress") {
     const { step, status } = msg;
-
-    // Send message to popup to update UI dynamically
-    chrome.runtime.sendMessage(
-      { action: "updatePopupUI", step, status },
-      () => {
-        // optional callback
-      }
-    );
-
+    chrome.runtime.sendMessage({ action: "updatePopupUI", step, status });
     return true;
   }
 
   return false;
 });
 
-// === Respond to popup creation and dynamically update it
+// === Create popup and update UI ===
 chrome.runtime.onMessage.addListener(async (msg) => {
   if (msg.action === "showProgressPopup") {
     const popupUrl = chrome.runtime.getURL("popup.html");
@@ -144,20 +148,18 @@ chrome.runtime.onMessage.addListener(async (msg) => {
             step: msg.step,
             status: msg.status,
           });
-        }, 1000); // slight delay to allow popup to load
+        }, 1000);
       }
     );
   }
 });
 
-// This will be the function that updates the popup HTML
 chrome.runtime.onMessage.addListener(async (msg) => {
   if (msg.action === "updatePopupUI") {
     const { step, status } = msg;
 
-    // Find the progress bar and update it with the report fields
-    const popupDocument = await chrome.windows.getCurrent({ populate: true });
-    const popupTab = popupDocument.tabs[0];
+    const popupWindow = await chrome.windows.getCurrent({ populate: true });
+    const popupTab = popupWindow.tabs[0];
 
     if (popupTab) {
       const reportFields = `
@@ -170,11 +172,11 @@ chrome.runtime.onMessage.addListener(async (msg) => {
 
       chrome.scripting.executeScript({
         target: { tabId: popupTab.id },
-        func: (reportFields) => {
+        func: (html) => {
           const container = document.getElementById("reportContainer");
           if (container) {
-            container.innerHTML = reportFields;
-            container.style.display = 'block';  // Make it visible
+            container.innerHTML = html;
+            container.style.display = 'block';
           } else {
             console.warn("⚠️ Report container not found.");
           }
@@ -184,3 +186,6 @@ chrome.runtime.onMessage.addListener(async (msg) => {
     }
   }
 });
+
+// === Ensure alarm is active on extension load (not just install) ===
+setupAlarm();

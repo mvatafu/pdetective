@@ -153,11 +153,11 @@ function setupButtonHandlers() {
     });
 
     // Add event listener for dynamically generated button
-    document.getElementById("updateReportButton").addEventListener("click", () => {
-        const step = "Step 1"; // Replace with dynamic value if needed
-        const status = "In Progress"; // Replace with dynamic value if needed
-        generateReportFields(step, status);
-    });
+    // document.getElementById("updateReportButton").addEventListener("click", () => {
+    //     const step = "Step 1"; // Replace with dynamic value if needed
+    //     const status = "In Progress"; // Replace with dynamic value if needed
+    //     generateReportFields(step, status);
+    // });
 }
   
 // === Init ===
