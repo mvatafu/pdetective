@@ -1,12 +1,12 @@
 // Ensure default interval is set on install/reload
 chrome.runtime.onInstalled.addListener(async () => {
-  const { autoRunIntervalMinutes } = await chrome.storage.local.get("autoRunIntervalMinutes");
+  const { autoRunInterval } = await chrome.storage.local.get("autoRunInterval");
 
-  if (autoRunIntervalMinutes === undefined) {
-    await chrome.storage.local.set({ autoRunIntervalMinutes: 5 });
-    console.log("🆕 Set default autoRunIntervalMinutes = 5");
+  if (autoRunInterval === undefined) {
+    await chrome.storage.local.set({ autoRunInterval: 5 });
+    console.log("🆕 Set default autoRunInterval = 5");
   } else {
-    console.log("ℹ️ autoRunIntervalMinutes already set to:", autoRunIntervalMinutes);
+    console.log("ℹ️ autoRunInterval already set to:", autoRunInterval);
   }
 });
 
@@ -19,12 +19,12 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   try {
     const now = Date.now();
 
-    const { lastRunTimestamp, autoRunIntervalMinutes } = await chrome.storage.local.get([
+    const { lastRunTimestamp, autoRunInterval } = await chrome.storage.local.get([
       "lastRunTimestamp",
-      "autoRunIntervalMinutes",
+      "autoRunInterval",
     ]);
 
-    const intervalMs = (autoRunIntervalMinutes || 5) * 60 * 1000;
+    const intervalMs = (autoRunInterval || 5) * 60 * 1000;
     const timeSinceLastRun = now - (lastRunTimestamp || 0);
 
     if (timeSinceLastRun < intervalMs) {

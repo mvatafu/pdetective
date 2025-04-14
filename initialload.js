@@ -15,13 +15,18 @@ async function runInitialLoadLogic() {
   console.log("Tenant URL:", tenantUrl);
 
   try {
-    // Clean up old storage keys
+    // Clean up old storage keys, but keep autoRunInterval
     const allStored = await new Promise(resolve => chrome.storage.local.get(null, resolve));
     console.log("Storage before cleanup:", allStored);
-
+  
     Object.keys(allStored).forEach(key => {
-      console.log(`Removing key: ${key}`);
-      chrome.storage.local.remove(key);
+      // Skip the removal of the autoRunInterval key
+      if (key !== "autoRunInterval") {
+        console.log(`Removing key: ${key}`);
+        chrome.storage.local.remove(key);
+      } else {
+        console.log(`Skipping removal of key: ${key}`);
+      }
     });
 
     // Fetch all content packages
