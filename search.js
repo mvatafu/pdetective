@@ -134,8 +134,8 @@ function showPopup(matches, selectedText) {
       diagramWrapper.style.border = "1px solid #ccc";
       diagramWrapper.style.marginTop = "30px";
 
-      const senders = matches.filter(m => m.direction === "Sender");
-      const receivers = matches.filter(m => m.direction === "Receiver");
+      const receivers = matches.filter(m => m.direction === "Sender");
+      const senders = matches.filter(m => m.direction === "Receiver");
 
       const senderNodes = senders.map((sender, i) => {
         const node = document.createElement("div");
@@ -146,12 +146,15 @@ function showPopup(matches, selectedText) {
         node.style.width = "180px";
         node.style.height = "70px";
         node.style.background = "#007bff";
-        node.style.color = "white";
+        node.style.color = "black";
         node.style.padding = "8px";
         node.style.borderRadius = "10px";
         node.style.textAlign = "center";
         node.style.lineHeight = "1.4";
         node.style.fontSize = "14px";
+        node.style.overflow = "hidden";
+        node.style.whiteSpace = "normal";
+        node.style.wordWrap = "break-word";
         node.innerHTML = `<b>${sender.elementId}</b><br>${sender.flowId}`;
         diagramWrapper.appendChild(node);
         return { ...sender, y: i * 120 + 85 };
@@ -166,12 +169,15 @@ function showPopup(matches, selectedText) {
         node.style.width = "180px";
         node.style.height = "70px";
         node.style.background = "#fd7e14";
-        node.style.color = "white";
+        node.style.color = "black";
         node.style.padding = "8px";
         node.style.borderRadius = "10px";
         node.style.textAlign = "center";
         node.style.lineHeight = "1.4";
         node.style.fontSize = "14px";
+        node.style.overflow = "hidden";
+        node.style.whiteSpace = "normal";
+        node.style.wordWrap = "break-word";
         node.innerHTML = `<b>${receiver.elementId}</b><br>${receiver.flowId}`;
         diagramWrapper.appendChild(node);
         return { ...receiver, y: i * 120 + 85 };
