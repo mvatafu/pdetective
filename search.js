@@ -1,33 +1,48 @@
-// Define the runSearchLogic function inside search.js
 function runSearchLogic() {
   // Step 1: Get selected text from the page
   const selectedText = window.getSelection().toString().trim();
+  console.log("Content script running on page:", window.location.href);
+  const fullUrl = window.location.href;
+  const tenantUrl = fullUrl.split('.com')[0] + '.com';
+
   if (!selectedText) {
     console.warn("No text selected!");
     return;
   }
+
   console.log("Selected text:", selectedText);
+
   // Step 2: Get all storage entries
   chrome.storage.local.get(null, (result) => {
     if (chrome.runtime.lastError) {
       console.error("Error accessing storage:", chrome.runtime.lastError);
       return;
     }
+
     const matches = [];
-    // Step 3: Search for the selected text in values
+
+    // Step 3: Search for the selected text in values for this tenant only
     for (const [key, value] of Object.entries(result)) {
+      if (!key.startsWith(`${tenantUrl}|`)) continue; // skip other tenants
       if (Object.values(value).includes(selectedText)) {
-        const [direction, flowId, packageId, elementId] = key.split('|');
-        matches.push({ direction, flowId, packageId, elementId });
+        const parts = key.split('|');
+        const direction = parts[1];
+        const elementId = parts[2];
+        const flowId = parts[3];
+        const packageId = parts[4];
+        matches.push({ direction, elementId, flowId, packageId });
       }
     }
+
     if (matches.length === 0) {
       console.log("No match found in local storage for selected text:", selectedText);
     }
-    // Show popup with matches or "No matches found" message
+
+    // Step 4: Show popup with matches or "No matches found" message
     showPopup(matches, selectedText);
   });
 }
+
 function showPopup(matches, selectedText) {
   const popup = document.createElement("div");
   popup.style.position = "fixed";

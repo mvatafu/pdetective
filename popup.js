@@ -29,24 +29,49 @@ function toggleExplanationSections() {
     btn.textContent = shouldShow ? "Hide details" : "Show details";
 }
   
-// === Settings Load/Save ===
-function loadSettings() {
-    chrome.storage.local.get(["autoRunInterval"], (result) => {
-        const interval = result.autoRunInterval || 5;
-        document.getElementById("autoRunInterval").value = interval;
+// === Settings Load/Save with Scoped Keys (tenantUrl|autoRunInterval) ===
+function extractTenantUrl(callback) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const url = tabs[0]?.url || "";
+      try {
+        const tenantUrl = url.split('.com')[0] + '.com';
+        callback(tenantUrl);
+      } catch (e) {
+        console.warn("❗ Could not extract tenant URL.");
+        callback(null);
+      }
     });
-}
+  }
   
-function saveSettings() {
-    const interval = document.getElementById("autoRunInterval").value;
-    if (interval && !isNaN(interval) && interval > 0) {
-        chrome.storage.local.set({ autoRunInterval: parseInt(interval) }, () => {
-            alert("Settings saved successfully!");
-        });
-    } else {
-        alert("Please enter a valid interval.");
+  function loadSettings() {
+    extractTenantUrl((tenantUrl) => {
+      if (!tenantUrl) return;
+  
+      const storageKey = `${tenantUrl}|autoRunInterval`;
+      chrome.storage.local.get([storageKey], (result) => {
+        const interval = result[storageKey] || 5;
+        document.getElementById("autoRunInterval").value = interval;
+      });
+    });
+  }
+  
+  function saveSettings() {
+    const interval = parseInt(document.getElementById("autoRunInterval").value);
+    if (!interval || isNaN(interval) || interval <= 0) {
+      alert("Please enter a valid interval.");
+      return;
     }
-}
+  
+    extractTenantUrl((tenantUrl) => {
+      if (!tenantUrl) return;
+  
+      const storageKey = `${tenantUrl}|autoRunInterval`;
+      chrome.storage.local.set({ [storageKey]: interval }, () => {
+        alert("Settings saved successfully!");
+      });
+    });
+  }
+  
   
 // === Script Injection Utility ===
 async function injectScript(tabId, markerVar, file, fallbackFuncName) {

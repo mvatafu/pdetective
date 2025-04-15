@@ -21,12 +21,18 @@ async function runInitialLoadLogic() {
   
     Object.keys(allStored).forEach(key => {
       // Skip the removal of the autoRunInterval key
-      if (key !== "autoRunInterval") {
-        console.log(`Removing key: ${key}`);
-        chrome.storage.local.remove(key);
-      } else {
-        console.log(`Skipping removal of key: ${key}`);
-      }
+    if (key === `${tenantUrl}|autoRunInterval` || key === `${tenantUrl}|lastRunTimestamp` ) {
+      console.log(`Skipping removal of key: ${key}`);
+      return;
+    }
+
+    // Only remove keys that start with the current tenantUrl
+    if (key.startsWith(`${tenantUrl}|`)) {
+      console.log(`Removing key: ${key}`);
+      chrome.storage.local.remove(key);
+    } else {
+      console.log(`Skipping unrelated key: ${key}`);
+    }
     });
 
     // Fetch all content packages
@@ -70,7 +76,7 @@ async function runInitialLoadLogic() {
             const direction = defaultChannels[i]?.direction?.value;
 
             if (address) {
-              const storageKey = `${direction}|${flowId}|${technicalName}|${connector.id}`;
+              const storageKey = `${tenantUrl}|${direction}|${flowId}|${technicalName}|${connector.id}`;
               chrome.storage.local.get([storageKey], (result) => {
                 const values = result[storageKey] || [];
 

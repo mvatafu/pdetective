@@ -1,61 +1,64 @@
-// === SET DEFAULT INTERVAL AND CREATE ALARM ===
+// === SET DEFAULT GLOBAL INTERVAL ON INSTALL (NOT TENANT-SPECIFIC) ===
 chrome.runtime.onInstalled.addListener(async () => {
   const { autoRunInterval } = await chrome.storage.local.get("autoRunInterval");
 
   if (autoRunInterval === undefined) {
     await chrome.storage.local.set({ autoRunInterval: 1440 });
-    console.log("🆕 Set default autoRunInterval = 1440");
+    console.log("🆕 Set global default autoRunInterval = 1440");
   } else {
-    console.log("ℹ️ autoRunInterval already set to:", autoRunInterval);
+    console.log("ℹ️ Global autoRunInterval already set to:", autoRunInterval);
   }
 
   setupAlarm();
 });
 
+// === ENSURE ALARM IS ACTIVE ON LOAD ===
+setupAlarm();
+
 // === SETUP ALARM FUNCTION ===
 async function setupAlarm() {
-  const { autoRunInterval } = await chrome.storage.local.get("autoRunInterval");
-  const intervalInMinutes = autoRunInterval || 1440;
-
   chrome.alarms.create("initialloadTrigger", {
-    periodInMinutes: intervalInMinutes,
+    periodInMinutes: 1, // always check every 1 min, tenant logic filters later
   });
 
-  console.log(`🔁 Alarm scheduled every ${intervalInMinutes} minute(s)`);
+  console.log("🔁 Alarm scheduled to check every 1 minute");
 }
 
-// === ON ALARM: RUN LOGIC IF ENOUGH TIME HAS PASSED ===
+// === ON ALARM: RUN LOGIC BASED ON ACTIVE TAB TENANT ===
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name !== "initialloadTrigger") return;
 
-  console.log("⏰ Alarm triggered. Checking if we should run initialload...");
+  console.log("⏰ Alarm triggered. Checking active tenant...");
 
   try {
-    const now = Date.now();
-    const { lastRunTimestamp, autoRunInterval } = await chrome.storage.local.get([
-      "lastRunTimestamp",
-      "autoRunInterval",
-    ]);
-
-    const intervalMs = (autoRunInterval || 5) * 60 * 1000;
-    const timeSinceLastRun = now - (lastRunTimestamp || 0);
-
-    if (timeSinceLastRun < intervalMs) {
-      console.log(`🛑 Skipping run. Only ${Math.round(timeSinceLastRun / 1000)} seconds passed since last run.`);
-      return;
-    }
-
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
     if (
-      !tab ||
-      !tab.id ||
-      !tab.url ||
+      !tab || !tab.id || !tab.url ||
       tab.url.startsWith("chrome://") ||
       tab.url.startsWith("chrome-extension://") ||
       !tab.url.includes("integrationsuite") ||
       !tab.url.includes("hana.ondemand.com")
     ) {
-      console.warn("❗ No valid active tab found or not allowed to inject.");
+      console.warn("❗ Invalid active tab for injection.");
+      return;
+    }
+
+    const tenantUrl = new URL(tab.url).origin;
+
+    const keys = await chrome.storage.local.get(null);
+    const intervalKey = `${tenantUrl}|autoRunInterval`;
+    const lastRunKey = `${tenantUrl}|lastRunTimestamp`;
+
+    const autoRunInterval = keys[intervalKey] ?? 1440;
+    const lastRunTimestamp = keys[lastRunKey] ?? 0;
+
+    const now = Date.now();
+    const intervalMs = autoRunInterval * 60 * 1000;
+    const timeSinceLastRun = now - lastRunTimestamp;
+
+    if (timeSinceLastRun < intervalMs) {
+      console.log(`🛑 Skipping run. Only ${Math.round(timeSinceLastRun / 1000)}s since last run.`);
       return;
     }
 
@@ -75,10 +78,10 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       await sendMessageToContentScript(tab.id);
     }
 
-    await chrome.storage.local.set({ lastRunTimestamp: now });
-    console.log("🕒 lastRunTimestamp updated:", new Date(now).toLocaleString());
-  } catch (error) {
-    console.error("💥 Error running alarm logic:", error);
+    await chrome.storage.local.set({ [lastRunKey]: now });
+    console.log(`🕒 ${lastRunKey} updated: ${new Date(now).toLocaleString()}`);
+  } catch (err) {
+    console.error("💥 Error in alarm logic:", err);
   }
 });
 
@@ -99,17 +102,17 @@ function sendMessageToContentScript(tabId) {
           if (typeof runInitialLoadLogic === "function") {
             runInitialLoadLogic();
           } else {
-            console.warn("⚠️ runInitialLoadLogic is not available.");
+            console.warn("⚠️ runInitialLoadLogic not available.");
           }
         },
       });
     }
 
     retries--;
-  }, 1000); // Retry every second, for up to 3 attempts
+  }, 1000);
 }
 
-// === Message listener for storage saving and UI updates ===
+// === Message Listener: Save to Storage ===
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === "saveToStorage") {
     const { key, value } = msg;
@@ -134,14 +137,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   return false;
 });
 
-// === Create popup and update UI ===
+// === Show Progress Popup ===
 chrome.runtime.onMessage.addListener(async (msg) => {
   if (msg.action === "showProgressPopup") {
     const popupUrl = chrome.runtime.getURL("popup.html");
 
     chrome.windows.create(
       { url: popupUrl, type: "popup", width: 400, height: 400 },
-      (win) => {
+      () => {
         setTimeout(() => {
           chrome.runtime.sendMessage({
             action: "updatePopupUI",
@@ -154,6 +157,7 @@ chrome.runtime.onMessage.addListener(async (msg) => {
   }
 });
 
+// === Update UI Inside Popup ===
 chrome.runtime.onMessage.addListener(async (msg) => {
   if (msg.action === "updatePopupUI") {
     const { step, status } = msg;
@@ -186,6 +190,3 @@ chrome.runtime.onMessage.addListener(async (msg) => {
     }
   }
 });
-
-// === Ensure alarm is active on extension load (not just install) ===
-setupAlarm();
