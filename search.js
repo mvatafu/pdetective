@@ -95,11 +95,12 @@ function showPopup(matches, selectedText) {
     thead.innerHTML = `
       <tr style="background-color: #f2f2f2;">
         <th style="padding: 10px; border-bottom: 1px solid #ccc; text-align: left;">Direction</th>
-        <th style="padding: 10px; border-bottom: 1px solid #ccc; text-align: left;">Element ID</th>
         <th style="padding: 10px; border-bottom: 1px solid #ccc; text-align: left;">iFlow ID</th>
         <th style="padding: 10px; border-bottom: 1px solid #ccc; text-align: left;">Package ID</th>
+        
       </tr>
     `;
+    // <th style="padding: 10px; border-bottom: 1px solid #ccc; text-align: left;">Package ID</th>
     table.appendChild(thead);
 
     const tbody = document.createElement("tbody");
@@ -109,8 +110,9 @@ function showPopup(matches, selectedText) {
         <td style="padding: 10px; border-bottom: 1px solid #eee;">${direction}</td>
         <td style="padding: 10px; border-bottom: 1px solid #eee;"><b>${elementId}</b></td>
         <td style="padding: 10px; border-bottom: 1px solid #eee;">${flowId}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee;">${packageId}</td>
+        
       `;
+      // <td style="padding: 10px; border-bottom: 1px solid #eee;">${packageId}</td>
       tbody.appendChild(row);
     });
     table.appendChild(tbody);
